@@ -1,160 +1,247 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>AtCoder シンクロ率</title>
+    <script type="text/javascript" src="AtCoder%20%E3%82%B7%E3%83%B3%E3%82%AF%E3%83%AD%E7%8E%87_files/jsapi.js"></script>
+    <style type="text/css">
+      * {
+	  margin: 8px;
+	  font-family: Arial, sans-serif;
+      }
 
-<head>
-	<meta charset="utf-8">
-	<link rel="shortcut icon" type="image/x-icon" href="https://phocom.github.io/atcoder-synchronicity/favicon.ico">
-	<title>AtCoder シンクロ率</title>
-	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-	<style type="text/css">
-		* {
-			margin: 8px;
-			font-family: Arial, sans-serif;
-		}
+      :focus {
+	  outline: none;
+      }
 
-		:focus {
-			outline: none;
-		}
+      input[type="text"] {
+	  padding: 4px;
+	  border-radius: 4px;
+	  border: 2px solid #bfbfbf;
+      }
 
-		input[type="text"] {
-			padding: 4px;
-			border-radius: 4px;
-			border: 2px solid #bfbfbf;
-		}
+      input[type="text"]:focus {
+	  box-shadow: 0 0 4px #7f7fff;
+      }
 
-		input[type="text"]:focus {
-			box-shadow: 0 0 4px #7f7fff;
-		}
+      input[type="submit"] {
+	  padding: 4px;
+	  border-radius: 4px;
+	  border: 2px solid #bfbfbf;
+      }
 
-		input[type="submit"] {
-			padding: 4px;
-			border-radius: 4px;
-			border: 2px solid #bfbfbf;
-		}
+      input[type="submit"]:hover {
+	  box-shadow: 0 0 4px #7f7fff;
+      }
+    </style>
+  </head>
 
-		input[type="submit"]:hover {
-			box-shadow: 0 0 4px #7f7fff;
-		}
-	</style>
-</head>
+  <body>
+    参考：https://phocom.github.io/atcoder-synchronicity
 
-<body>
-	<form>
-		User 1<input type="text" id="user1" spellcheck="false"><br>
-		User 2<input type="text" id="user2" spellcheck="false"><br>
-		<input type="submit" id="submit" value="Submit"
-			onclick="location.href='#/'+document.getElementById('user1').value+'/'+document.getElementById('user2').value;"><br>
-	</form>
-	<span id="res"></span><br>
-	<a id="tweet" target="_blank"></a><br>
-	<div id="chart" style="width: 600px; height: 600px"></div>
-	<script type="text/javascript">
-		google.load('visualization', '1', { 'packages': ['corechart'] });
-		const proxy = "https://1d878d9b.us-south.apigw.appdomain.cloud/proxy?url=";
-		let user1Contests, user2Contests;
-		let data;
-		let load1, load2;
-		let user1, user2;
-		function ajax(url, success) {
-			let req = new XMLHttpRequest();
-			req.onload = (function () {
-				success(JSON.parse(req.response.response));
-			});
-			req.open("GET", proxy + url);
-			req.responseType = "json";
-			req.send();
-		}
-		function reload() {
-			user1Contests = {};
-			user2Contests = {};
-			data = [];
-			load1 = false;
-			load2 = false;
-			user1 = document.getElementById("user1").value;
-			user2 = document.getElementById("user2").value;
-			document.getElementById("res").innerHTML = "Loading...";
-			ajax("https://atcoder.jp/users/" + user1 + "/history/json", function (res) {
-				for (let i in res) {
-					let contest = res[i];
-					if (contest.IsRated == true) {
-						user1Contests[contest.ContestName] = contest.Performance;
-					}
-				}
-				load1 = true;
-				if (load2) calc();
-			});
-			ajax("https://atcoder.jp/users/" + user2 + "/history/json", function (res) {
-				for (let i in res) {
-					let contest = res[i];
-					if (contest.IsRated == true) {
-						user2Contests[contest.ContestName] = contest.Performance;
-					}
-				}
-				load2 = true;
-				if (load1) calc();
-			});
-		};
-		window.addEventListener("load", () => {
-			if (location.hash.length > 2) {
-				document.getElementById("user1").value = location.hash.split("/")[1];
-				document.getElementById("user2").value = location.hash.split("/")[2];
-				reload();
-			}
-		});
-		window.addEventListener("hashchange", () => {
-			reload();
-		});
-		function calc() {
-			for (let contest in user1Contests) {
-				if (user2Contests[contest]) {
-					data.push([user1Contests[contest], user2Contests[contest], contest]);
-				}
-			}
-			if (data.length == 0) {
-				document.getElementById("res").innerHTML = "シンクロ率を計算できませんでした";
-				return;
-			} else if (data.length <= 2) {
-				document.getElementById("res").innerHTML = "計算に用いることのできるサンプル数が少なすぎるみたいです";
-				return;
-			}
-			let ave = [0.0, 0.0];
-			for (let dat in data) {
-				ave[0] += data[dat][0];
-				ave[1] += data[dat][1];
-			}
-			ave[0] /= data.length;
-			ave[1] /= data.length;
-			let diff = [0.0, 0.0];
-			let con = 0.0;
-			for (let dat in data) {
-				diff[0] += (ave[0] - data[dat][0]) ** 2;
-				diff[1] += (ave[1] - data[dat][1]) ** 2;
-				con += (ave[0] - data[dat][0]) * (ave[1] - data[dat][1]);
-			}
-			diff[0] /= data.length;
-			diff[1] /= data.length;
-			diff[0] = Math.sqrt(diff[0]);
-			diff[1] = Math.sqrt(diff[1]);
-			con /= data.length;
-			let ans = con / (diff[0] * diff[1]);
-			document.getElementById("res").innerHTML = user1 + " さんと " + user2 + " さんのシンクロ率は " + (ans * 100).toFixed(2) + " %です！";
-			let arr = new google.visualization.DataTable();
-			arr.addColumn("number", user1);
-			arr.addColumn("number", user2);
-			arr.addColumn({ type: "string", role: "tooltip" });
-			for (let dat in data) {
-				arr.addRow(data[dat]);
-			}
-			let options = { hAxis: { title: user1 }, vAxis: { title: user2 }, legend: 'none' };
-			let chart = new google.visualization.ScatterChart(document.getElementById("chart"));
-			chart.draw(arr, options);
-			document.getElementById("tweet").innerHTML = "結果をつぶやく";
-			let tweetText = document.getElementById("res").innerHTML + "\n";
-			tweetText += "https://phocom.github.io/atcoder-synchronicity/#/" + user1 + "/" + user2;
-			tweetText += " #AtCoderシンクロ率";
-			document.getElementById("tweet").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(tweetText);
-		}
-	</script>
-</body>
+    <form>
+      User<input type="text" id="user" spellcheck="false" value="beet"><br>
+      <input type="submit" id="submit" value="Submit" onclick="location.href='#/'+document.getElementById('user').value;"><br>
+    </form>
+    <span id="res"></span><br>
+    <a id="tweet" target="_blank"></a><br>
+    <script type="text/javascript">
+      const proxy = "https://1d878d9b.us-south.apigw.appdomain.cloud/proxy?url=";
+      var result = new Map();
+      var top100 = new Array();
 
+      top100.push("yutaka1999");
+      top100.push("semiexp");
+      top100.push("snuke");
+      top100.push("yosupo");
+      top100.push("DEGwer");
+      top100.push("hos_lyric");
+      top100.push("maroonrk");
+      top100.push("chokudai");
+      top100.push("WA_TLE");
+      top100.push("yokozuna57");
+      top100.push("uwi");
+      top100.push("sigma425");
+      top100.push("japlj");
+      top100.push("IH19980412");
+      top100.push("natsugiri");
+      top100.push("Huziwara");
+      top100.push("asi1024");
+      top100.push("latte0119");
+      top100.push("tozangezan");
+      top100.push("sky58");
+      top100.push("kawatea");
+      top100.push("E869120");
+      top100.push("noshi91");
+      top100.push("wo01");
+      top100.push("ats5515");
+      top100.push("joisino");
+      top100.push("kobae964");
+      top100.push("rickytheta");
+      top100.push("nuip");
+      top100.push("tempura0224");
+      top100.push("hitonanode");
+      top100.push("kmjp");
+      top100.push("riantkb");
+      top100.push("catupper");
+      top100.push("Aquarius");
+      top100.push("heno239");
+      top100.push("anta");
+      top100.push("tatyam");
+      top100.push("satashun");
+      top100.push("camypaper");
+      top100.push("zerokugi");
+      top100.push("climpet");
+      top100.push("sumitacchan");
+      top100.push("LayCurse");
+      top100.push("beet");
+      top100.push("Komaki");
+      top100.push("yuma000");
+      top100.push("Kmcode");
+      top100.push("sheyasutaka");
+      top100.push("re_sha");
+      top100.push("maspy");
+      top100.push("goto");
+      top100.push("TangentDay");
+      top100.push("PIandS");
+      top100.push("mechanicalpenciI");
+      top100.push("math");
+      top100.push("kort0n");
+      top100.push("Pulmn");
+      top100.push("chocorusk");
+      top100.push("tomerun");
+      top100.push("risujiroh");
+      top100.push("square1001");
+      top100.push("drafear");
+      top100.push("gazelle");
+      top100.push("tos");
+      top100.push("hirosegolf");
+      top100.push("betrue12");
+      top100.push("reew2n");
+      top100.push("cyz666");
+      top100.push("smiken");
+      top100.push("yamunaku");
+      top100.push("b2563125");
+      top100.push("mtsd");
+      top100.push("pekempey");
+      top100.push("pes");
+      top100.push("Hoi_koro");
+      top100.push("leign");
+      top100.push("kotatsugame");
+      top100.push("olphe");
+      top100.push("leaf1415");
+      top100.push("noimi");
+      top100.push("hoget157");
+      top100.push("potetisensei");
+      top100.push("fuppy0716");
+      top100.push("TMJN");
+      top100.push("kimiyuki");
+      top100.push("ixmel_rd");
+      top100.push("QCFium");
+      top100.push("Tiramister");
+      top100.push("kotamanegi");
+      top100.push("June_boy");
+      top100.push("phidnight");
+      top100.push("moririn2528");
+      top100.push("tokoharu");
+      top100.push("ei13333");
+      top100.push("platypus");
+      top100.push("ynymxiaolongbao");
+      top100.push("tubuann");
+      top100.push("drken");
+      top100.push("gasin");
+
+      function ajax(url, success) {
+	  let req = new XMLHttpRequest();
+	  req.onload = (function () {
+	      success(JSON.parse(req.response.response));
+	  });
+	  req.open("GET", proxy + url);
+	  req.responseType = "json";
+	  req.send();
+      }
+
+      function reload() {
+	  user = document.getElementById("user").value;
+	  document.getElementById("res").innerHTML = "Loading...";
+	  top100.push(user);
+	  var cnt = 0;
+	  for (let person of top100) {
+	      result[person] = new Map();
+	      ajax("https://atcoder.jp/users/" + person + "/history/json", function (res) {
+		  for (let i in res) {
+		      let contest = res[i];
+		      if (contest.IsRated == true) {
+			  result[person][contest.ContestName] = contest.Performance;
+		      }
+		  }
+		  cnt++;
+		  if(cnt == top100.length) calc();
+	      });
+	  }
+      };
+      window.addEventListener("load", () => {
+	  if (location.hash.length > 1) {
+	      document.getElementById("user").value = location.hash.split("/")[1];
+	      reload();
+	  }
+      });
+      window.addEventListener("hashchange", () => {
+	  reload();
+      });
+
+      function query(x, y){
+	  let data = [];
+	  for (let contest in result[x]) {
+	      if (result[y][contest]) {
+		  data.push([result[x][contest], result[y][contest], contest]);
+	      }
+	  }
+	  if (data.length == 0 || data.length <= 2) {
+	      return "-";
+	  }
+	  let ave = [0.0, 0.0];
+	  for (let dat in data) {
+	      ave[0] += data[dat][0];
+	      ave[1] += data[dat][1];
+	  }
+	  ave[0] /= data.length;
+	  ave[1] /= data.length;
+	  let diff = [0.0, 0.0];
+	  let con = 0.0;
+	  for (let dat in data) {
+	      diff[0] += (ave[0] - data[dat][0]) ** 2;
+	      diff[1] += (ave[1] - data[dat][1]) ** 2;
+	      con += (ave[0] - data[dat][0]) * (ave[1] - data[dat][1]);
+	  }
+	  diff[0] /= data.length;
+	  diff[1] /= data.length;
+	  diff[0] = Math.sqrt(diff[0]);
+	  diff[1] = Math.sqrt(diff[1]);
+	  con /= data.length;
+	  let ans = con / (diff[0] * diff[1]);
+	  return (ans * 100).toFixed(2);
+      }
+
+      function calc() {
+	  user = document.getElementById("user").value;
+	  let table = "<table border=\"1px\">";
+	  table += "<tr>";
+	  table += "<th>you</td>";
+	  table += "<th>top100</td>";
+	  table += "<td align=\"right\">%</td>";
+	  table += "</tr>";
+	  for (let person of top100) {
+	      table += "<tr>";
+	      table += "<td>" + user + "</td>";
+	      table += "<td>" + person + "</td>";
+	      table += "<td align=\"right\">" + query(user, person) + "</td>";
+	      table += "</tr>";
+	  }
+	  table += "</table>";
+	  document.getElementById("res").innerHTML = table;
+      }
+      </script>
+  </body>
 </html>
